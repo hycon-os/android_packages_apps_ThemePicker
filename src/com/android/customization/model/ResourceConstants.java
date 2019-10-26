@@ -89,8 +89,8 @@ public interface ResourceConstants {
     };
 
     ArrayList<String> sTargetPackages = new ArrayList<>();
-    String ACCENT_COLOR_LIGHT_NAME = "accent_device_default_light";
-    String ACCENT_COLOR_DARK_NAME = "accent_device_default_dark";
+    String ACCENT_COLOR_LIGHT_NAME = "accent_material_light";
+    String ACCENT_COLOR_DARK_NAME = "accent_material_dark";
 
     float PATH_SIZE = 100f;
 
