@@ -98,7 +98,7 @@
             android:id="@+id/preview_seekbar"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            android:tint="@color/theme_preview_icon_color"
+            style="@*android:style/Widget.DeviceDefault.SeekBar"
             android:maxHeight="2dp"
             android:progress="1"
             android:clickable="true"

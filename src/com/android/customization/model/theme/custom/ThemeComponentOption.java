@@ -23,6 +23,7 @@ import static com.android.customization.model.ResourceConstants.OVERLAY_CATEGORY
 import static com.android.customization.model.ResourceConstants.OVERLAY_CATEGORY_ICON_SYSUI;
 import static com.android.customization.model.ResourceConstants.OVERLAY_CATEGORY_ICON_THEMEPICKER;
 import static com.android.customization.model.ResourceConstants.OVERLAY_CATEGORY_SHAPE;
+import static com.android.customization.model.ResourceConstants.PATH_SIZE;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -33,8 +34,14 @@ import android.content.res.TypedArray;
 import android.graphics.Path;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.ShapeDrawable.ShaderFactory;
+import android.graphics.drawable.shapes.PathShape;
+import android.graphics.LinearGradient;
+import android.graphics.Shader;
+import android.graphics.Shader.TileMode;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -296,6 +303,11 @@ public abstract class ThemeComponentOption implements CustomizationOption<ThemeC
 
         @ColorInt private int mColorAccentLight;
         @ColorInt private int mColorAccentDark;
+
+        @ColorInt private int mColorGradientStartLight;
+        @ColorInt private int mColorGradientStartDark;
+        @ColorInt private int mColorGradientEndLight;
+        @ColorInt private int mColorGradientEndDark;
         /**
          * Icons shown as example of QuickSettings tiles in the color preview screen.
          */
@@ -305,16 +317,22 @@ public abstract class ThemeComponentOption implements CustomizationOption<ThemeC
          * Drawable with the currently selected shape to be used as background of the sample
          * QuickSetting icons in the color preview screen.
          */
-        private Drawable mShapeDrawable;
+        private PathShape mShapePath;
 
         private String mLabel;
 
         ColorOption(String packageName, String label, @ColorInt int lightColor,
-                @ColorInt int darkColor) {
+                @ColorInt int darkColor, @ColorInt int gradientStartLightColor,
+                @ColorInt int gradientStartDarkColor, @ColorInt int gradientEndLightColor,
+                @ColorInt int gradientEndDarkColor) {
             addOverlayPackage(OVERLAY_CATEGORY_COLOR, packageName);
             mLabel = label;
             mColorAccentLight = lightColor;
             mColorAccentDark = darkColor;
+            mColorGradientStartLight = gradientStartLightColor;
+            mColorGradientStartDark = gradientStartDarkColor;
+            mColorGradientEndLight = gradientEndLightColor;
+            mColorGradientEndDark = gradientEndDarkColor;
         }
 
         @Override
@@ -372,6 +390,22 @@ public abstract class ThemeComponentOption implements CustomizationOption<ThemeC
                     }
             );
 
+            Configuration configuration = res.getConfiguration();
+            final boolean isDarkModeOn = (configuration.uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                    == Configuration.UI_MODE_NIGHT_YES;
+            @ColorInt int gradientStartColor = isDarkModeOn ? mColorGradientStartDark : mColorGradientStartLight;
+            @ColorInt int gradientEndColor = isDarkModeOn ? mColorGradientEndDark : mColorGradientEndLight;
+
+            ShapeDrawable gradient = new ShapeDrawable();
+            gradient.setShaderFactory(new ShaderFactory() {
+                @Override
+                public Shader resize(int width, int height) {
+                    LinearGradient gradient = new LinearGradient (0, PATH_SIZE, PATH_SIZE, 0,
+                            gradientStartColor, gradientEndColor, TileMode.REPEAT);
+                    return gradient;
+                }
+            });
+
             for (int i = 0; i < COLOR_BUTTON_IDS.length; i++) {
                 CompoundButton button = container.findViewById(COLOR_BUTTON_IDS[i]);
                 button.setButtonTintList(tintList);
@@ -385,22 +419,23 @@ public abstract class ThemeComponentOption implements CustomizationOption<ThemeC
             SeekBar seekbar = container.findViewById(R.id.preview_seekbar);
             seekbar.setThumbTintList(seekbarTintList);
             seekbar.setProgressTintList(seekbarTintList);
-            seekbar.setProgressBackgroundTintList(seekbarTintList);
+            /*LayerDrawable seekBarProgressDrawable = (LayerDrawable) seekbar.getProgressDrawable();
+            ScaleDrawable progressGradientDrawable = (ScaleDrawable) seekBarProgressDrawable
+                    .findDrawableByLayerId(com.android.internal.R.id.progress);
+            progressGradientDrawable.setDrawable(gradient);*/
             // Disable seekbar
             seekbar.setOnTouchListener((view, motionEvent) -> true);
 
             int iconFgColor = res.getColor(R.color.tile_enabled_icon_color, null);
-            if (!mIcons.isEmpty() && mShapeDrawable != null) {
+            if (!mIcons.isEmpty() && mShapePath != null) {
                 for (int i = 0; i < COLOR_TILE_IDS.length; i++) {
                     Drawable icon = mIcons.get(COLOR_TILES_ICON_IDS[i][1]).getConstantState()
                             .newDrawable();
                     icon.setTint(iconFgColor);
-                    //TODO: load and set the shape.
-                    Drawable bgShape = mShapeDrawable.getConstantState().newDrawable();
-                    bgShape.setTint(accentColor);
 
                     ImageView bg = container.findViewById(COLOR_TILE_IDS[i]);
-                    bg.setImageDrawable(bgShape);
+                    bg.setImageDrawable(ResourceConstants.getBgShapeDrawable(mShapePath,
+                            gradientStartColor, gradientEndColor));
                     ImageView fg = container.findViewById(COLOR_TILES_ICON_IDS[i][0]);
                     fg.setImageDrawable(icon);
                 }
@@ -411,13 +446,15 @@ public abstract class ThemeComponentOption implements CustomizationOption<ThemeC
             mIcons.addAll(icons);
         }
 
-        public void setShapeDrawable(@Nullable Drawable shapeDrawable) {
-            mShapeDrawable = shapeDrawable;
+        public void setPathShape(@Nullable PathShape shape) {
+            mShapePath = shape;
         }
 
         @Override
         public Builder buildStep(Builder builder) {
-            builder.setColorAccentDark(mColorAccentDark).setColorAccentLight(mColorAccentLight);
+            builder.setColorAccentDark(mColorAccentDark).setColorAccentLight(mColorAccentLight)
+                    .setColorGradients(mColorGradientStartLight, mColorGradientStartDark,
+                    mColorGradientEndLight, mColorGradientEndDark);
             return super.buildStep(builder);
         }
     }

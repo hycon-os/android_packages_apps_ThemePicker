@@ -133,9 +133,11 @@ public class CustomThemeNameFragment extends CustomThemeStepFragment {
         Context context = getContext();
         PreviewInfo previewInfo = mCustomThemeManager.buildCustomThemePreviewInfo(context);
         mCoverPage = new ThemeCoverPage(context, getThemeName(),
-                previewInfo.resolveAccentColor(getResources()), previewInfo.icons,
+                previewInfo.resolveAccentColor(getResources()),
+                previewInfo.resolveGradientStartColor(getResources()),
+                previewInfo.resolveGradientEndColor(getResources()), previewInfo.icons,
                 previewInfo.headlineFontFamily, previewInfo.bottomSheeetCornerRadius,
-                previewInfo.shapeDrawable, previewInfo.shapeAppIcons, null,
+                previewInfo.shape, previewInfo.shapeAppIcons, null,
                 mColorButtonIds, mColorTileIds, mColorTileIconIds, mShapeIconIds,
                 new WallpaperLayoutListener());
         mCoverPage.setCard(card);

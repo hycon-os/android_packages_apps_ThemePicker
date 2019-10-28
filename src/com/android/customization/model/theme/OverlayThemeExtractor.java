@@ -68,7 +68,12 @@ class OverlayThemeExtractor {
                     .setColorAccentLight(loadColor(ResourceConstants.ACCENT_COLOR_LIGHT_NAME,
                             colorOverlayPackage))
                     .setColorAccentDark(loadColor(ResourceConstants.ACCENT_COLOR_DARK_NAME,
-                            colorOverlayPackage));
+                            colorOverlayPackage))
+                    .setColorGradients(
+                            loadColor(ResourceConstants.GRADIENT_START_COLOR_LIGHT_NAME, colorOverlayPackage),
+                            loadColor(ResourceConstants.GRADIENT_START_COLOR_DARK_NAME, colorOverlayPackage),
+                            loadColor(ResourceConstants.GRADIENT_END_COLOR_LIGHT_NAME, colorOverlayPackage),
+                            loadColor(ResourceConstants.GRADIENT_END_COLOR_DARK_NAME, colorOverlayPackage));
         } else {
             addSystemDefaultColor(builder);
         }
@@ -190,6 +195,21 @@ class OverlayThemeExtractor {
                 system.getIdentifier(ResourceConstants.ACCENT_COLOR_DARK_NAME, "color",
                         ResourceConstants.ANDROID_PACKAGE), null);
         builder.setColorAccentDark(colorAccentDark);
+
+        int colorGradientStartLight = system.getColor(
+                system.getIdentifier(ResourceConstants.GRADIENT_START_COLOR_LIGHT_NAME, "color",
+                        ResourceConstants.ANDROID_PACKAGE), null);
+        int colorGradientStartDark = system.getColor(
+                system.getIdentifier(ResourceConstants.GRADIENT_START_COLOR_DARK_NAME, "color",
+                        ResourceConstants.ANDROID_PACKAGE), null);
+        int colorGradientEndLight = system.getColor(
+                system.getIdentifier(ResourceConstants.GRADIENT_END_COLOR_LIGHT_NAME, "color",
+                        ResourceConstants.ANDROID_PACKAGE), null);
+        int colorGradientEndDark = system.getColor(
+                system.getIdentifier(ResourceConstants.GRADIENT_END_COLOR_DARK_NAME, "color",
+                        ResourceConstants.ANDROID_PACKAGE), null);
+        builder.setColorGradients(colorGradientStartLight, colorGradientStartDark,
+                colorGradientEndLight, colorGradientEndDark);
     }
 
     void addSystemDefaultFont(Builder builder) {

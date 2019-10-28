@@ -15,8 +15,16 @@
  */
 package com.android.customization.model;
 
+import static com.android.customization.model.ResourceConstants.PATH_SIZE;
+
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.ShapeDrawable.ShaderFactory;
+import android.graphics.drawable.shapes.PathShape;
+import android.graphics.LinearGradient;
+import android.graphics.Shader;
+import android.graphics.Shader.TileMode;
 import android.provider.Settings.Secure;
 
 import com.android.wallpaper.R;
@@ -57,7 +65,7 @@ public interface ResourceConstants {
     /**
      * Overlay Categories that theme picker handles.
      */
-    String OVERLAY_CATEGORY_COLOR = "android.theme.customization.accent_color";
+    String OVERLAY_CATEGORY_COLOR = "revengeos.theme.customization.gradient";
     String OVERLAY_CATEGORY_FONT = "android.theme.customization.font";
     String OVERLAY_CATEGORY_SHAPE = "android.theme.customization.adaptive_icon_shape";
     String OVERLAY_CATEGORY_ICON_ANDROID = "android.theme.customization.icon_pack.android";
@@ -92,6 +100,11 @@ public interface ResourceConstants {
     String ACCENT_COLOR_LIGHT_NAME = "accent_device_default_light";
     String ACCENT_COLOR_DARK_NAME = "accent_device_default_dark";
 
+    String GRADIENT_START_COLOR_LIGHT_NAME = "gradient_start_light";
+    String GRADIENT_START_COLOR_DARK_NAME = "gradient_start_dark";
+    String GRADIENT_END_COLOR_LIGHT_NAME = "gradient_end_light";
+    String GRADIENT_END_COLOR_DARK_NAME = "gradient_end_dark";
+
     float PATH_SIZE = 100f;
 
     static String[] getPackagesToOverlay(Context context) {
@@ -113,5 +126,21 @@ public interface ResourceConstants {
      */
     static String getIconMask(Resources res, String packageName) {
         return res.getString(res.getIdentifier(CONFIG_ICON_MASK, "string", packageName));
+    }
+
+    static ShapeDrawable getBgShapeDrawable(PathShape pathShape, int gradientStartColor,
+                int gradientEndColor) {
+        ShapeDrawable bgShape = new ShapeDrawable(pathShape);
+        bgShape.setShaderFactory(new ShaderFactory() {
+            @Override
+            public Shader resize(int width, int height) {
+                LinearGradient gradient = new LinearGradient (0, PATH_SIZE, PATH_SIZE, 0,
+                        gradientStartColor, gradientEndColor, TileMode.REPEAT);
+                return gradient;
+            }
+        });
+        bgShape.setIntrinsicHeight((int) PATH_SIZE);
+        bgShape.setIntrinsicWidth((int) PATH_SIZE);
+        return bgShape;
     }
 }

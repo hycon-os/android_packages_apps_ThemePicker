@@ -18,6 +18,10 @@ package com.android.customization.model.theme.custom;
 import static com.android.customization.model.ResourceConstants.ACCENT_COLOR_DARK_NAME;
 import static com.android.customization.model.ResourceConstants.ACCENT_COLOR_LIGHT_NAME;
 import static com.android.customization.model.ResourceConstants.ANDROID_PACKAGE;
+import static com.android.customization.model.ResourceConstants.GRADIENT_START_COLOR_LIGHT_NAME;
+import static com.android.customization.model.ResourceConstants.GRADIENT_START_COLOR_DARK_NAME;
+import static com.android.customization.model.ResourceConstants.GRADIENT_END_COLOR_LIGHT_NAME;
+import static com.android.customization.model.ResourceConstants.GRADIENT_END_COLOR_DARK_NAME;
 import static com.android.customization.model.ResourceConstants.ICONS_FOR_PREVIEW;
 import static com.android.customization.model.ResourceConstants.OVERLAY_CATEGORY_ANDROID_THEME;
 import static com.android.customization.model.ResourceConstants.OVERLAY_CATEGORY_COLOR;
@@ -31,7 +35,6 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
 import android.os.UserHandle;
 import android.text.TextUtils;
@@ -89,7 +92,7 @@ public class ColorOptionsProvider extends ThemeComponentOptionProvider<ColorOpti
         if (TextUtils.isEmpty(shapePackage)) {
             shapePackage = ANDROID_PACKAGE;
         }
-        Drawable shape = loadShape(shapePackage);
+        PathShape shape = loadShape(shapePackage);
         addDefault(previewIcons, shape);
         for (String overlayPackage : mOverlayPackages) {
             try {
@@ -100,11 +103,24 @@ public class ColorOptionsProvider extends ThemeComponentOptionProvider<ColorOpti
                 int darkColor = overlayRes.getColor(
                         overlayRes.getIdentifier(ACCENT_COLOR_DARK_NAME, "color", overlayPackage),
                         null);
+                int gradientStartLightColor = overlayRes.getColor(
+                        overlayRes.getIdentifier(GRADIENT_START_COLOR_LIGHT_NAME, "color", overlayPackage),
+                        null);
+                int gradientStartDarkColor = overlayRes.getColor(
+                        overlayRes.getIdentifier(GRADIENT_START_COLOR_DARK_NAME, "color", overlayPackage),
+                        null);
+                int gradientEndLightColor = overlayRes.getColor(
+                        overlayRes.getIdentifier(GRADIENT_END_COLOR_LIGHT_NAME, "color", overlayPackage),
+                        null);
+                int gradientEndDarkColor = overlayRes.getColor(
+                        overlayRes.getIdentifier(GRADIENT_END_COLOR_DARK_NAME, "color", overlayPackage),
+                        null);
                 PackageManager pm = mContext.getPackageManager();
                 String label = pm.getApplicationInfo(overlayPackage, 0).loadLabel(pm).toString();
-                ColorOption option = new ColorOption(overlayPackage, label, lightColor, darkColor);
+                ColorOption option = new ColorOption(overlayPackage, label, lightColor, darkColor,
+                       gradientStartLightColor, gradientStartDarkColor, gradientEndLightColor, gradientEndDarkColor);
                 option.setPreviewIcons(previewIcons);
-                option.setShapeDrawable(shape);
+                option.setPathShape(shape);
                 mOptions.add(option);
             } catch (NameNotFoundException | NotFoundException e) {
                 Log.w(TAG, String.format("Couldn't load color overlay %s, will skip it",
@@ -113,8 +129,9 @@ public class ColorOptionsProvider extends ThemeComponentOptionProvider<ColorOpti
         }
     }
 
-    private void addDefault(List<Drawable> previewIcons, Drawable shape) {
-        int lightColor, darkColor;
+    private void addDefault(List<Drawable> previewIcons, PathShape shape) {
+        int lightColor, darkColor, gradientStartLightColor,
+                gradientStartDarkColor, gradientEndLightColor, gradientEndDarkColor;
         Resources system = Resources.getSystem();
         try {
             Resources r = getOverlayResources(mDefaultThemePackage);
@@ -124,6 +141,19 @@ public class ColorOptionsProvider extends ThemeComponentOptionProvider<ColorOpti
             darkColor = r.getColor(
                     r.getIdentifier(ACCENT_COLOR_DARK_NAME, "color", mDefaultThemePackage),
                     null);
+
+            gradientStartLightColor = r.getColor(
+                    r.getIdentifier(GRADIENT_START_COLOR_LIGHT_NAME, "color", mDefaultThemePackage),
+                    null);
+            gradientStartDarkColor = r.getColor(
+                    r.getIdentifier(GRADIENT_START_COLOR_DARK_NAME, "color", mDefaultThemePackage),
+                    null);
+            gradientEndLightColor = r.getColor(
+                    r.getIdentifier(GRADIENT_END_COLOR_LIGHT_NAME, "color", mDefaultThemePackage),
+                    null);
+            gradientEndDarkColor = r.getColor(
+                    r.getIdentifier(GRADIENT_END_COLOR_DARK_NAME, "color", mDefaultThemePackage),
+                    null);
         } catch (NotFoundException | NameNotFoundException e) {
             Log.d(TAG, "Didn't find default color, will use system option", e);
 
@@ -132,11 +162,21 @@ public class ColorOptionsProvider extends ThemeComponentOptionProvider<ColorOpti
 
             darkColor = system.getColor(
                     system.getIdentifier(ACCENT_COLOR_DARK_NAME, "color", ANDROID_PACKAGE), null);
+
+            gradientStartLightColor = system.getColor(
+                    system.getIdentifier(GRADIENT_START_COLOR_LIGHT_NAME, "color", ANDROID_PACKAGE), null);
+            gradientStartDarkColor = system.getColor(
+                    system.getIdentifier(GRADIENT_START_COLOR_DARK_NAME, "color", ANDROID_PACKAGE), null);
+            gradientEndLightColor = system.getColor(
+                    system.getIdentifier(GRADIENT_END_COLOR_LIGHT_NAME, "color", ANDROID_PACKAGE), null);
+            gradientEndDarkColor = system.getColor(
+                    system.getIdentifier(GRADIENT_END_COLOR_DARK_NAME, "color", ANDROID_PACKAGE), null);
         }
         ColorOption option = new ColorOption(null,
-                mContext.getString(R.string.default_theme_title), lightColor, darkColor);
+                mContext.getString(R.string.default_theme_title), lightColor, darkColor, gradientStartLightColor,
+                        gradientStartDarkColor, gradientEndLightColor, gradientEndDarkColor);
         option.setPreviewIcons(previewIcons);
-        option.setShapeDrawable(shape);
+        option.setPathShape(shape);
         mOptions.add(option);
     }
 
@@ -148,7 +188,7 @@ public class ColorOptionsProvider extends ThemeComponentOptionProvider<ColorOpti
                 overlayRes.getIdentifier(drawableName, "drawable", packageName), null);
     }
 
-    private Drawable loadShape(String packageName) {
+    private PathShape loadShape(String packageName) {
         String path = null;
         try {
             Resources r = getOverlayResources(packageName);
@@ -157,15 +197,12 @@ public class ColorOptionsProvider extends ThemeComponentOptionProvider<ColorOpti
         } catch (NameNotFoundException e) {
             Log.d(TAG, String.format("Couldn't load shape icon for %s, skipping.", packageName), e);
         }
-        ShapeDrawable shapeDrawable = null;
+        PathShape shape = null;
         if (!TextUtils.isEmpty(path)) {
-            PathShape shape = new PathShape(PathParser.createPathFromPathData(path),
+            shape = new PathShape(PathParser.createPathFromPathData(path),
                     PATH_SIZE, PATH_SIZE);
-            shapeDrawable = new ShapeDrawable(shape);
-            shapeDrawable.setIntrinsicHeight((int) PATH_SIZE);
-            shapeDrawable.setIntrinsicWidth((int) PATH_SIZE);
         }
-        return shapeDrawable;
+        return shape;
     }
 
 }

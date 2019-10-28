@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.shapes.PathShape;
 import android.icu.text.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +23,7 @@ import androidx.annotation.LayoutRes;
 import androidx.annotation.StringRes;
 import androidx.constraintlayout.widget.Guideline;
 
+import com.android.customization.model.ResourceConstants;
 import com.android.customization.picker.BasePreviewAdapter.PreviewPage;
 import com.android.wallpaper.R;
 
@@ -43,11 +45,16 @@ abstract class ThemePreviewPage extends PreviewPage {
     final int contentLayoutRes;
     @ColorInt
     final int accentColor;
+    @ColorInt
+    final int gradientStartColor;
+    @ColorInt
+    final int gradientEndColor;
     protected final LayoutInflater inflater;
 
     public ThemePreviewPage(Context context, @StringRes int titleResId,
             @DrawableRes int iconSrc, @LayoutRes int contentLayoutRes,
-            @ColorInt int accentColor) {
+            @ColorInt int accentColor, @ColorInt int gradientStartColor,
+            @ColorInt int gradientEndColor) {
         super(null);
         this.nameResId = titleResId;
         if (iconSrc != Resources.ID_NULL) {
@@ -59,6 +66,8 @@ abstract class ThemePreviewPage extends PreviewPage {
         }
         this.contentLayoutRes = contentLayoutRes;
         this.accentColor = accentColor;
+        this.gradientStartColor = gradientStartColor;
+        this.gradientEndColor = gradientEndColor;
         this.inflater = LayoutInflater.from(context);
     }
 
@@ -94,7 +103,7 @@ abstract class ThemePreviewPage extends PreviewPage {
         private final Typeface mHeadlineFont;
         private final List<Drawable> mIcons;
         private final List<Drawable> mShapeAppIcons;
-        private Drawable mShapeDrawable;
+        private PathShape mShapePath;
         private final int[] mColorButtonIds;
         private final int[] mColorTileIds;
         private final int[][] mColorTileIconIds;
@@ -106,20 +115,20 @@ abstract class ThemePreviewPage extends PreviewPage {
         private final int mCornerRadius;
         private final ColorStateList mTintList;
 
-        public ThemeCoverPage(Context context, String title, int accentColor, List<Drawable> icons,
-                Typeface headlineFont, int cornerRadius,
-                Drawable shapeDrawable,
-                List<Drawable> shapeAppIcons,
+        public ThemeCoverPage(Context context, String title, int accentColor,
+                int gradientStartColor, int gradientEndColor,
+                List<Drawable> icons, Typeface headlineFont,
+                int cornerRadius, PathShape shape, List<Drawable> shapeAppIcons,
                 OnClickListener editClickListener,
                 int[] colorButtonIds, int[] colorTileIds, int[][] colorTileIconIds,
                 int[] shapeIconIds, OnLayoutChangeListener... wallpaperListeners) {
-            super(context, 0, 0, R.layout.preview_card_cover_content, accentColor);
+            super(context, 0, 0, R.layout.preview_card_cover_content, accentColor, gradientStartColor, gradientEndColor);
             mRes = context.getResources();
             mTitle = title;
             mHeadlineFont = headlineFont;
             mIcons = icons;
             mCornerRadius = cornerRadius;
-            mShapeDrawable = shapeDrawable;
+            mShapePath = shape;
             mShapeAppIcons = shapeAppIcons;
             mEditClickListener = editClickListener;
             mColorButtonIds = colorButtonIds;
@@ -169,11 +178,9 @@ abstract class ThemePreviewPage extends PreviewPage {
             for (int i = 0; i < 3 && i < mIcons.size(); i++) {
                 Drawable icon = mIcons.get(mColorTileIconIds[i][1]).getConstantState()
                         .newDrawable().mutate();
-                Drawable bgShape = mShapeDrawable.getConstantState().newDrawable();
-                bgShape.setTint(accentColor);
-
                 ImageView bg = card.findViewById(mColorTileIds[i]);
-                bg.setImageDrawable(bgShape);
+                bg.setImageDrawable(ResourceConstants.getBgShapeDrawable(mShapePath,
+                        gradientStartColor, gradientEndColor));
                 ImageView fg = card.findViewById(mColorTileIconIds[i][0]);
                 fg.setImageDrawable(icon);
             }

@@ -29,7 +29,6 @@ import android.graphics.Path;
 import android.graphics.Typeface;
 import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.PathShape;
 import android.icu.text.SimpleDateFormat;
 import android.text.TextUtils;
@@ -47,6 +46,7 @@ import androidx.core.graphics.PathParser;
 
 import com.android.customization.model.CustomizationManager;
 import com.android.customization.model.CustomizationOption;
+import com.android.customization.model.ResourceConstants;
 import com.android.customization.widget.DynamicAdaptiveIconDrawable;
 import com.android.wallpaper.R;
 import com.android.wallpaper.asset.Asset;
@@ -111,11 +111,11 @@ public class ThemeBundle implements CustomizationOption<ThemeBundle> {
 
         ((TextView) view.findViewById(R.id.theme_option_font)).setTypeface(
                 mPreviewInfo.headlineFontFamily);
-        if (mPreviewInfo.shapeDrawable != null) {
-            ((ShapeDrawable) mPreviewInfo.shapeDrawable).getPaint().setColor(
-                    mPreviewInfo.resolveAccentColor(res));
+        if (mPreviewInfo.shape != null) {
             ((ImageView) view.findViewById(R.id.theme_option_shape)).setImageDrawable(
-                    mPreviewInfo.shapeDrawable);
+                    ResourceConstants.getBgShapeDrawable(mPreviewInfo.shape,
+                    mPreviewInfo.resolveGradientStartColor(res),
+                    mPreviewInfo.resolveGradientEndColor(res)));
         }
         if (!mPreviewInfo.icons.isEmpty()) {
             Drawable icon = mPreviewInfo.icons.get(0).getConstantState().newDrawable().mutate();
@@ -278,22 +278,31 @@ public class ThemeBundle implements CustomizationOption<ThemeBundle> {
         public final Typeface headlineFontFamily;
         @ColorInt public final int colorAccentLight;
         @ColorInt public final int colorAccentDark;
+        @ColorInt public final int colorGradientStartLight;
+        @ColorInt public final int colorGradientStartDark;
+        @ColorInt public final int colorGradientEndLight;
+        @ColorInt public final int colorGradientEndDark;
         public final List<Drawable> icons;
-        public final Drawable shapeDrawable;
+        public final PathShape shape;
         @Nullable public final Asset wallpaperAsset;
         public final List<Drawable> shapeAppIcons;
         @Dimension public final int bottomSheeetCornerRadius;
 
         private PreviewInfo(Context context, Typeface bodyFontFamily, Typeface headlineFontFamily,
-                int colorAccentLight, int colorAccentDark, List<Drawable> icons,
-                Drawable shapeDrawable, @Dimension int cornerRadius,
+                int colorAccentLight, int colorAccentDark, int colorGradientStartLight,
+                int colorGradientStartDark, int colorGradientEndLight, int colorGradientEndDark,
+                List<Drawable> icons, PathShape shape, @Dimension int cornerRadius,
                 @Nullable Asset wallpaperAsset, List<Drawable> shapeAppIcons) {
             this.bodyFontFamily = bodyFontFamily;
             this.headlineFontFamily = headlineFontFamily;
             this.colorAccentLight = colorAccentLight;
             this.colorAccentDark = colorAccentDark;
+            this.colorGradientStartLight = colorGradientStartLight;
+            this.colorGradientStartDark = colorGradientStartDark;
+            this.colorGradientEndLight = colorGradientEndLight;
+            this.colorGradientEndDark = colorGradientEndDark;
             this.icons = icons;
-            this.shapeDrawable = shapeDrawable;
+            this.shape = shape;
             this.bottomSheeetCornerRadius = cornerRadius;
             this.wallpaperAsset = wallpaperAsset == null
                     ? null : new BitmapCachingAsset(context, wallpaperAsset);
@@ -310,6 +319,18 @@ public class ThemeBundle implements CustomizationOption<ThemeBundle> {
             return (res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
                     == Configuration.UI_MODE_NIGHT_YES ? colorAccentDark : colorAccentLight;
         }
+
+        @ColorInt
+        public int resolveGradientStartColor(Resources res) {
+            return (res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                    == Configuration.UI_MODE_NIGHT_YES ? colorGradientStartDark : colorGradientStartLight;
+        }
+
+        @ColorInt
+        public int resolveGradientEndColor(Resources res) {
+            return (res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                    == Configuration.UI_MODE_NIGHT_YES ? colorGradientEndDark : colorGradientEndLight;
+        }
     }
 
     public static class Builder {
@@ -318,6 +339,10 @@ public class ThemeBundle implements CustomizationOption<ThemeBundle> {
         private Typeface mHeadlineFontFamily;
         @ColorInt private int mColorAccentLight = -1;
         @ColorInt private int mColorAccentDark = -1;
+        @ColorInt private int mColorGradientStartLight = -1;
+        @ColorInt private int mColorGradientStartDark = -1;
+        @ColorInt private int mColorGradientEndLight = -1;
+        @ColorInt private int mColorGradientEndDark = -1;
         private List<Drawable> mIcons = new ArrayList<>();
         private String mPathString;
         private Path mShapePath;
@@ -335,17 +360,14 @@ public class ThemeBundle implements CustomizationOption<ThemeBundle> {
         }
 
         public PreviewInfo createPreviewInfo(Context context) {
-            ShapeDrawable shapeDrawable = null;
+            PathShape shape = null;
             List<Drawable> shapeIcons = new ArrayList<>();
             Path path = mShapePath;
             if (!TextUtils.isEmpty(mPathString)) {
                 path = PathParser.createPathFromPathData(mPathString);
             }
             if (path != null) {
-                PathShape shape = new PathShape(path, PATH_SIZE, PATH_SIZE);
-                shapeDrawable = new ShapeDrawable(shape);
-                shapeDrawable.setIntrinsicHeight((int) PATH_SIZE);
-                shapeDrawable.setIntrinsicWidth((int) PATH_SIZE);
+                shape = new PathShape(path, PATH_SIZE, PATH_SIZE);
                 for (Drawable icon : mAppIcons) {
                     if (icon instanceof AdaptiveIconDrawable) {
                         AdaptiveIconDrawable adaptiveIcon = (AdaptiveIconDrawable) icon;
@@ -359,7 +381,8 @@ public class ThemeBundle implements CustomizationOption<ThemeBundle> {
                 }
             }
             return new PreviewInfo(context, mBodyFontFamily, mHeadlineFontFamily, mColorAccentLight,
-                    mColorAccentDark, mIcons, shapeDrawable, mCornerRadius,
+                    mColorAccentDark, mColorGradientStartLight, mColorGradientStartDark,
+                    mColorGradientEndLight, mColorGradientEndDark, mIcons, shape, mCornerRadius,
                     mWallpaperAsset, shapeIcons);
         }
 
@@ -393,6 +416,15 @@ public class ThemeBundle implements CustomizationOption<ThemeBundle> {
 
         public Builder setColorAccentDark(@ColorInt int colorAccentDark) {
             mColorAccentDark = colorAccentDark;
+            return this;
+        }
+
+        public Builder setColorGradients(@ColorInt int colorGradientStartLight, @ColorInt int colorGradientStartDark,
+                @ColorInt int colorGradientEndLight, @ColorInt int colorGradientEndDark) {
+            mColorGradientStartLight = colorGradientStartLight;
+            mColorGradientStartDark = colorGradientStartDark;
+            mColorGradientEndLight = colorGradientEndLight;
+            mColorGradientEndDark = colorGradientEndDark;
             return this;
         }
 
