@@ -183,4 +183,7 @@
 
     <!-- Generic error message [CHAR_LIMIT=NONE] -->
     <string name="something_went_wrong">Oops! Something went wrong.</string>
+
+    <!-- Gradient style -->
+    <string name="gradient_style_toggle">Gradient effect</string>
 </resources>

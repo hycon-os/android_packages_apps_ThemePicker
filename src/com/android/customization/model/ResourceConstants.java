@@ -105,6 +105,8 @@ public interface ResourceConstants {
     String GRADIENT_END_COLOR_LIGHT_NAME = "gradient_end_light";
     String GRADIENT_END_COLOR_DARK_NAME = "gradient_end_dark";
 
+    String COLOR_STYLE_SOLID_OVERLAY = "com.revengeos.theme.color.style.solid";
+
     float PATH_SIZE = 100f;
 
     static String[] getPackagesToOverlay(Context context) {

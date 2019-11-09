@@ -16,11 +16,14 @@
 package com.android.customization.picker.theme;
 
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+import static com.android.customization.model.ResourceConstants.COLOR_STYLE_SOLID_OVERLAY;
 
 import android.app.Activity;
 import android.app.WallpaperColors;
 import android.content.Context;
 import android.content.Intent;
+import android.content.om.OverlayInfo;
+import android.content.om.OverlayManager;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -29,6 +32,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.UserHandle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -107,6 +112,9 @@ public class ThemeFragment extends ToolbarFragment {
     private WallpaperInfo mCurrentHomeWallpaper;
     private CurrentWallpaperInfoFactory mCurrentWallpaperFactory;
     private TimeTicker mTicker;
+    private Switch mGradientToggle;
+    private OverlayManager mOverlayManager;
+    private Handler handler;
 
     @Override
     public void onAttach(Context context) {
@@ -148,6 +156,27 @@ public class ThemeFragment extends ToolbarFragment {
         });
         mUseMyWallpaperButton = view.findViewById(R.id.use_my_wallpaper);
         mUseMyWallpaperButton.setOnCheckedChangeListener(this::onUseMyWallpaperCheckChanged);
+
+        mOverlayManager = getContext().getSystemService(OverlayManager.class);
+        boolean isColorStyleSolidEnabled = false;
+        final int userId = UserHandle.myUserId();
+        isColorStyleSolidEnabled = mOverlayManager.getOverlayInfo(COLOR_STYLE_SOLID_OVERLAY,
+                UserHandle.of(userId)).state == OverlayInfo.STATE_ENABLED;
+
+        handler = new Handler();
+        mGradientToggle = view.findViewById(R.id.gradient_toggle);
+        mGradientToggle.setChecked(!isColorStyleSolidEnabled);
+        mGradientToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                handler.postDelayed(new Runnable() {
+                    public void run() {
+                        mOverlayManager.setEnabled(COLOR_STYLE_SOLID_OVERLAY,
+                                !isChecked, UserHandle.of(userId));
+                    }
+                }, 200);
+            }
+        });
         setUpOptions(savedInstanceState);
 
         return view;

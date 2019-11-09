@@ -15,6 +15,7 @@
  */
 package com.android.customization.model.theme;
 
+import static com.android.customization.model.ResourceConstants.COLOR_STYLE_SOLID_OVERLAY;
 import static com.android.customization.model.ResourceConstants.OVERLAY_CATEGORY_COLOR;
 import static com.android.customization.model.ResourceConstants.OVERLAY_CATEGORY_FONT;
 import static com.android.customization.model.ResourceConstants.OVERLAY_CATEGORY_ICON_ANDROID;
@@ -22,6 +23,8 @@ import static com.android.customization.model.ResourceConstants.OVERLAY_CATEGORY
 import static com.android.customization.model.ResourceConstants.PATH_SIZE;
 
 import android.content.Context;
+import android.content.om.OverlayInfo;
+import android.content.om.OverlayManager;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -31,6 +34,7 @@ import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.shapes.PathShape;
 import android.icu.text.SimpleDateFormat;
+import android.os.UserHandle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -287,6 +291,7 @@ public class ThemeBundle implements CustomizationOption<ThemeBundle> {
         @Nullable public final Asset wallpaperAsset;
         public final List<Drawable> shapeAppIcons;
         @Dimension public final int bottomSheeetCornerRadius;
+        private final boolean isColorStyleSolidEnabled;
 
         private PreviewInfo(Context context, Typeface bodyFontFamily, Typeface headlineFontFamily,
                 int colorAccentLight, int colorAccentDark, int colorGradientStartLight,
@@ -307,6 +312,9 @@ public class ThemeBundle implements CustomizationOption<ThemeBundle> {
             this.wallpaperAsset = wallpaperAsset == null
                     ? null : new BitmapCachingAsset(context, wallpaperAsset);
             this.shapeAppIcons = shapeAppIcons;
+
+            isColorStyleSolidEnabled = context.getSystemService(OverlayManager.class).getOverlayInfo(
+                    COLOR_STYLE_SOLID_OVERLAY, UserHandle.of(UserHandle.myUserId())).state == OverlayInfo.STATE_ENABLED;
         }
 
         /**
@@ -322,14 +330,22 @@ public class ThemeBundle implements CustomizationOption<ThemeBundle> {
 
         @ColorInt
         public int resolveGradientStartColor(Resources res) {
-            return (res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
-                    == Configuration.UI_MODE_NIGHT_YES ? colorGradientStartDark : colorGradientStartLight;
+            if (isColorStyleSolidEnabled) {
+                return resolveAccentColor(res);
+            } else {
+                return (res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                        == Configuration.UI_MODE_NIGHT_YES ? colorGradientStartDark : colorGradientStartLight;
+            }
         }
 
         @ColorInt
         public int resolveGradientEndColor(Resources res) {
-            return (res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
-                    == Configuration.UI_MODE_NIGHT_YES ? colorGradientEndDark : colorGradientEndLight;
+            if (isColorStyleSolidEnabled) {
+                return resolveAccentColor(res);
+            } else {
+                return (res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                        == Configuration.UI_MODE_NIGHT_YES ? colorGradientEndDark : colorGradientEndLight;
+            }
         }
     }
 

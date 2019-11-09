@@ -76,6 +76,18 @@
                 app:layout_constraintTop_toBottomOf="@id/options_container"
                 app:layout_constraintVertical_bias="1.0"/>
 
+            <Switch
+                android:id="@+id/gradient_toggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:layout_marginStart="12dp"
+                android:layout_marginBottom="25dp"
+                android:switchPadding="10dp"
+                android:text="@string/gradient_style_toggle"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
             <Button
                 android:id="@+id/apply_button"
                 style="@style/ActionPrimaryButton"
